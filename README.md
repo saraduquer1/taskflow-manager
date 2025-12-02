@@ -1,58 +1,88 @@
-# Welcome to your Lovable project
+# **TaskFlow- Gestor de Tareas**
 
-## Project info
+Web application for managing tasks.
 
-**URL**: https://lovable.dev/projects/57304b7a-e0f0-4ead-9edc-75d1e78b4a91
+## **Prerequisites**
 
-## How can I edit this code?
+Before starting, make sure you have the following installed on your system:
 
-There are several ways of editing your application.
+### **1. Node.js**
 
-**Use Lovable**
+**Check if installed:**
+```bash
+node --version
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/57304b7a-e0f0-4ead-9edc-75d1e78b4a91) and start prompting.
+**If not installed:**
+- Download from: https://nodejs.org/
 
-Changes made via Lovable will be committed automatically to this repo.
+### **2. AWS CLI**
 
-**Use your preferred IDE**
+**Check if installed:**
+```bash
+aws --version
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**If not installed:**
+1. Download from: https://aws.amazon.com/cli/
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### **3. Serverless Framework**
 
-Follow these steps:
+**Check if installed:**
+```bash
+serverless --version
+```
+
+**If not installed:**
+```bash
+npm install -g serverless
+```
+
+## **Configurations**
+
+### **General**
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
+```
 
-# Step 2: Navigate to the project directory.
+### **Frontend**
+
+```bash
+# 1. Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
+# 2. Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### **Backend**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+# 1. Navigate to the project's backend directory. 
+cd backend
 
-**Use GitHub Codespaces**
+# 2. Install the necessary dependencies for the backend.
+npm i
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# 3. Configure AWS
+aws configure
+# Enter: 
 
-## What technologies are used for this project?
+# Your Access Key ID
+# Your Secret Access Key
+# Region: us-east-1
+# Output: json
 
-This project is built with:
+# 4. Deploy to AWS
+serverless deploy
+```
+
+## **Frontend technologies**
 
 - Vite
 - TypeScript
@@ -60,14 +90,9 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## **Bakend technologies**
 
-Simply open [Lovable](https://lovable.dev/projects/57304b7a-e0f0-4ead-9edc-75d1e78b4a91) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- AWS Lambda
+- API Gateway
+- DynamoDB
+- Serverless Framework
