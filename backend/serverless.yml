@@ -1,0 +1,91 @@
+service: taskmaster-api
+
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  
+  # Variables de entorno globales
+  environment:
+    TASKS_TABLE: ${self:service}-tasks-${self:provider.stage}
+    
+  # Permisos IAM para las funciones Lambda
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TASKS_TABLE}"
+
+functions:
+  # GET /tasks - Obtener todas las tareas
+  getTasks:
+    handler: handler.getTasks
+    events:
+      - httpApi:
+          path: /tasks
+          method: get
+          
+  # GET /tasks/{id} - Obtener una tarea específica
+  getTask:
+    handler: handler.getTask
+    events:
+      - httpApi:
+          path: /tasks/{id}
+          method: get
+          
+  # POST /tasks - Crear nueva tarea
+  createTask:
+    handler: handler.createTask
+    events:
+      - httpApi:
+          path: /tasks
+          method: post
+          
+  # PUT /tasks/{id} - Actualizar tarea
+  updateTask:
+    handler: handler.updateTask
+    events:
+      - httpApi:
+          path: /tasks/{id}
+          method: put
+          
+  # DELETE /tasks/{id} - Eliminar tarea
+  deleteTask:
+    handler: handler.deleteTask
+    events:
+      - httpApi:
+          path: /tasks/{id}
+          method: delete
+
+# Recursos de infraestructura (DynamoDB)
+resources:
+  Resources:
+    TasksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TASKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: taskId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: taskId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3001
