@@ -16,11 +16,40 @@ This template demonstrates how to make a simple HTTP API with Node.js running on
 
 This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
 
-## Usage
+## Step by Step
+### 1. Installations
+1. If you don't have the Serverless Framework installed yet, you can install it globally using npm:
+
+```bash
+npm install -g serverless
+```
+2. You must install serverless offline to test endpoints locally. Run the command below:
+```bash
+npm install serverless-offline
+```
+
+3. Run the command below to install a modern version of sdk (sdk V3 avoids conflicts when sending requests in production)
+```bash
+npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
+```
+
+### 2. Run locally (Optional)
+If you want to test the endpoints locally, follow these instructions:
+
+1. It will be easier to execute dynamoDB locally using an official AWS image than other methods. Firstly, you must open Docker Desktop application in order to start running its engine. Once it's done, run the command below:
+```bash
+docker run --name dynamo-local -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb
+```
+This command will keep executing a new container named "dynamo-local" locally using the AWS image as reference.
+
+2. Just after running docker container, you must open another terminal (don't kill the one where docker is running), and execute the command below to run locally this project without struggling:
+```bash
+npm run dev
+```
 
 ### Deployment
 
-In order to deploy the example, you need to run the following command:
+In order to deploy the project, you just need to run the following command:
 
 ```
 serverless deploy
@@ -31,39 +60,33 @@ After running deploy, you should see output similar to:
 ```
 Deploying "serverless-http-api" to stage "dev" (us-east-1)
 
-✔ Service deployed to stack serverless-http-api-dev (91s)
+✔ Service deployed to stack taskmaster-api-dev (55s)
 
-endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
+endpoints:
+GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
+...
 functions:
-  hello: serverless-http-api-dev-hello (1.6 kB)
+  getTasks: taskmaster-api-dev-getTasks (1.6 kB)
+  ...
+```
+
+_IMPORTANT_: After deploy and test the available endpoints, it's MANDATORY that you kill all instances created by serverless:
+```bash
+serverless remove
 ```
 
 _Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [HTTP API (API Gateway V2) event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api).
 
-### Invocation
+### Sending HTTPS requests
 
 After successful deployment, you can call the created application via HTTP:
 
 ```
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
+curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/tasks
 ```
 
 Which should result in response similar to:
 
 ```json
-{ "message": "Go Serverless v4! Your function executed successfully!" }
+{ "message": "No hay tareas disponibles" }
 ```
-
-### Local development
-
-The easiest way to develop and test your function is to use the `dev` command:
-
-```
-serverless dev
-```
-
-This will start a local emulator of AWS Lambda and tunnel your requests to and from AWS Lambda, allowing you to interact with your function as if it were running in the cloud.
-
-Now you can invoke the function as before, but this time the function will be executed locally. Now you can develop your function locally, invoke it, and see the results immediately without having to re-deploy.
-
-When you are done developing, don't forget to run `serverless deploy` to deploy the function to the cloud.

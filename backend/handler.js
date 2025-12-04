@@ -1,7 +1,34 @@
-const AWS = require('aws-sdk');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient,
+  ScanCommand,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const TASKS_TABLE = process.env.TASKS_TABLE;
+let client;
+
+if (process.env.IS_OFFLINE) {
+  console.log('*** Conectando a DynamoDB Local (http://localhost:8000) ***');
+
+  client = new DynamoDBClient({
+    region: 'us-east-1',
+    endpoint: 'http://localhost:8000',
+    credentials: {
+      accessKeyId: "fakeMyKeyId",
+      secretAccessKey: "fakeSecretAccessKey",
+    }
+  });
+} else {
+  console.log('*** Conectando a DynamoDB en AWS Cloud ***');
+
+  client = new DynamoDBClient({
+    region: 'us-east-1',
+  });
+};
+
+const dynamoDb = DynamoDBDocumentClient.from(client);
 
 // Headers CORS comunes
 const headers = {
@@ -19,9 +46,9 @@ const response = (statusCode, body) => ({
 
 // Generar UUID manualmente (sin librería)
 const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c == 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 };
@@ -29,14 +56,21 @@ const generateUUID = () => {
 /**
  * GET /tasks - Obtener todas las tareas
  */
-module.exports.getTasks = async (event) => {
-  try {
-    const result = await dynamoDb.scan({
-      TableName: TASKS_TABLE,
-    }).promise();
+module.exports.getTasks = async () => {
+  const params = {
+    TableName: TASKS_TABLE,
+  };
 
+  try {
+    const result = await dynamoDb.send(new ScanCommand(params));
+
+    if (!result.Items || result.Items.length === 0) {
+      return response(404, {
+        error: 'No hay tareas disponibles',
+      });
+    }
     // Ordenar por fecha de creación (más reciente primero)
-    const tasks = result.Items.sort((a, b) => 
+    const tasks = result.Items.sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
     );
 
@@ -54,10 +88,12 @@ module.exports.getTask = async (event) => {
   try {
     const { id } = event.pathParameters;
 
-    const result = await dynamoDb.get({
+    const params = {
       TableName: TASKS_TABLE,
-      Key: { taskId: id },
-    }).promise();
+      Key: { PK: `TASK#${id}` },
+    };
+
+    const result = await dynamoDb.send(new GetCommand(params));
 
     if (!result.Item) {
       return response(404, { error: 'Tarea no encontrada' });
@@ -76,15 +112,16 @@ module.exports.getTask = async (event) => {
 module.exports.createTask = async (event) => {
   try {
     const data = JSON.parse(event.body);
-    
+
     // Validación básica
     if (!data.title || !data.priority) {
       return response(400, { error: 'Título y prioridad son requeridos' });
     }
 
+    const taskId = generateUUID();
     const timestamp = new Date().toISOString();
     const task = {
-      taskId: generateUUID(),
+      PK: `TASK#${taskId}`,
       title: data.title,
       description: data.description || '',
       priority: data.priority,
@@ -93,10 +130,12 @@ module.exports.createTask = async (event) => {
       dueDate: data.dueDate || '',
     };
 
-    await dynamoDb.put({
-      TableName: TASKS_TABLE,
-      Item: task,
-    }).promise();
+    await dynamoDb.send(
+      new PutCommand({
+        TableName: TASKS_TABLE,
+        Item: task,
+      })
+    );
 
     return response(201, task);
   } catch (error) {
@@ -112,12 +151,15 @@ module.exports.updateTask = async (event) => {
   try {
     const { id } = event.pathParameters;
     const data = JSON.parse(event.body);
+    const key = { PK: `TASK#${id}` };
 
     // Verificar que la tarea existe
-    const existing = await dynamoDb.get({
-      TableName: TASKS_TABLE,
-      Key: { taskId: id },
-    }).promise();
+    const existing = await dynamoDb.send(
+      new GetCommand({
+        TableName: TASKS_TABLE,
+        Key: key,
+      })
+    );
 
     if (!existing.Item) {
       return response(404, { error: 'Tarea no encontrada' });
@@ -154,14 +196,16 @@ module.exports.updateTask = async (event) => {
       expressionAttributeValues[':dueDate'] = data.dueDate;
     }
 
-    const result = await dynamoDb.update({
+    const params = {
       TableName: TASKS_TABLE,
-      Key: { taskId: id },
-      UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+      Key: key,
+      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
-      ReturnValues: 'ALL_NEW',
-    }).promise();
+      ReturnValues: "ALL_NEW",
+    };
+
+    const result = await dynamoDb.send(new UpdateCommand(params));
 
     return response(200, result.Attributes);
   } catch (error) {
@@ -176,21 +220,26 @@ module.exports.updateTask = async (event) => {
 module.exports.deleteTask = async (event) => {
   try {
     const { id } = event.pathParameters;
+    const key = { PK: `TASK#${id}` };
 
     // Verificar que existe antes de eliminar
-    const existing = await dynamoDb.get({
-      TableName: TASKS_TABLE,
-      Key: { taskId: id },
-    }).promise();
+    const existing = await dynamoDb.send(
+      new GetCommand({
+        TableName: TASKS_TABLE,
+        Key: key,
+      })
+    );
 
     if (!existing.Item) {
       return response(404, { error: 'Tarea no encontrada' });
     }
 
-    await dynamoDb.delete({
-      TableName: TASKS_TABLE,
-      Key: { taskId: id },
-    }).promise();
+    await dynamoDb.send(
+      new DeleteCommand({
+        TableName: TASKS_TABLE,
+        Key: key,
+      })
+    );
 
     return response(200, { message: 'Tarea eliminada correctamente' });
   } catch (error) {

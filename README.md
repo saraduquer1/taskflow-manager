@@ -1,4 +1,4 @@
-# **TaskFlow- Gestor de Tareas**
+# **TaskFlow- Tasks manager**
 
 Web application for managing tasks.
 
@@ -26,7 +26,7 @@ aws --version
 **If not installed:**
 1. Download from: https://aws.amazon.com/cli/
 
-### **3. Serverless Framework**
+### **3. Serverless Framework (Into backend folder)**
 
 **Check if installed:**
 ```bash
@@ -35,6 +35,8 @@ serverless --version
 
 **If not installed:**
 ```bash
+# IMPORTANT: This command must be executed in backend's folder
+cd backend
 npm install -g serverless
 ```
 
@@ -77,11 +79,12 @@ aws configure
 # Your Secret Access Key
 # Region: us-east-1
 # Output: json
-
+```
+The final step is to deploy project's backend to AWS after install specific dependencies to make it possible. [Please, click here to read backend guide](backend/README.md) before you run the command below:
+```bash
 # 4. Deploy to AWS
 serverless deploy
 ```
-
 ## **Frontend technologies**
 
 - Vite
@@ -95,4 +98,5 @@ serverless deploy
 - AWS Lambda
 - API Gateway
 - DynamoDB
+- Docker
 - Serverless Framework
