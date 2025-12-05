@@ -31,6 +31,14 @@ plugins:
   - serverless-offline
 
 functions:
+  # GET / - Obtener mensaje inicial (Raíz)
+  getRoot:
+    handler: handler.getRoot
+    events:
+      - httpApi:
+          path: /
+          method: get
+
   # GET /tasks - Obtener todas las tareas
   getTasks:
     handler: handler.getTasks

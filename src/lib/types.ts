@@ -15,7 +15,7 @@ export interface TaskFormData {
   title: string;
   description: string;
   priority: Priority;
-  dueDate: Date | undefined;
+  dueDate: Date | String;
 }
 
 export type FilterType = 'todas' | 'pendientes' | 'completadas';
