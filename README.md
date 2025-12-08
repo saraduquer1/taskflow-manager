@@ -1,6 +1,6 @@
 # **Documento Técnico**
 
-[Documento de Google Docs] (https://docs.google.com/document/d/1pcC9RQF0iqKfuOEp-qQXptkYECjwDEYPz6KZ2fTJIGU/edit?usp=sharing)
+https://docs.google.com/document/d/1pcC9RQF0iqKfuOEp-qQXptkYECjwDEYPz6KZ2fTJIGU/edit?usp=sharing
 
 # **TaskFlow- Tasks manager**
 
